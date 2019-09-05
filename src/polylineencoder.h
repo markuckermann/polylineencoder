@@ -2,6 +2,7 @@
 *  MIT License                                                                    *
 *                                                                                 *
 *  Copyright (c) 2017 Vahan Aghajanyan <vahancho@gmail.com>                       *
+*  Copyright (c) 2019 Mark Uckermann <mark.uckermann@gmail.com>                   *
 *                                                                                 *
 *  Permission is hereby granted, free of charge, to any person obtaining a copy   *
 *  of this software and associated documentation files (the "Software"), to deal  *
@@ -21,55 +22,91 @@
 *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
 *  SOFTWARE.                                                                      *
 ***********************************************************************************/
-
 #ifndef POLYLINEENCODER_H
 #define POLYLINEENCODER_H
 
-#include <string>
-#include <vector>
-#include <tuple>
+#include <cstring> // uses strcat()
+#include <cmath> // uses round()
+#include <cstdint> // for the uint32_t definition
 
 //! Implements Google's polyline compression algorithm.
 /*!
   For more details refer to the algorithm definition at
   https://developers.google.com/maps/documentation/utilities/polylinealgorithm
 */
-class PolylineEncoder
+namespace Polyline {
+
+struct Point {
+	double lat; // latitude in degrees
+	double lon; // longitude in degrees
+};
+
+/** Encodes a single point.
+ * Takes a Point structure and a pointer to a c-style string for the result.
+ * The result string must have space for 10 characters + null character.
+ * Returns the length of the encoded result string.
+ */
+size_t encodePoint( Point* pt, char *result);
+
+/** Encodes a polyline
+ * Takes a pointer to a Point structure array of size num_points
+ * and a c-style string with a max length of len_coords for the result.
+ * Returns the number of points encoded.
+ * Check that num_points equals the result for successful encoding of all points.
+ */
+size_t encodeLine(Point *points, size_t num_points, 
+               char *coords, size_t len_coords);
+
+/** Decodes a polyline
+ * Takes a c-style string and a Point array 
+ * for the result. 
+ * Returns the number of points decoded.
+ * If the return equals max_points, the decoding might have ended
+ * prematurely.
+ */
+size_t decodeLine(const char *coords, Point *points, const size_t max_points);
+
+class StepDecoder
 {
 public:
-    using Point = std::tuple<double, double>;
-    using Polyline = std::vector<Point>;
 
-    //! Adds new point with the given \p latitude and \p longitude for encoding.
-    void addPoint(double latitude, double longitude);
+    /** Resets the decoding state machine. 
+     * Has to be called before starting the decoding of a new 
+     * polyline string.
+     */
+    void start();
+    
+    /** A single step (one character) of the decoding process.
+     * Given the next character and a pointer to a Point,
+     * this function will attempt to fill the Point.
+     * Returns:
+     *      0 if the full point has been decoded
+     *      1 if the latitude has been decoded
+     *      2 if the decoding process is unfinshed
+     * Call this function repeatedly while checking the return code.
+     */
+    int step( char c, Point * point );
 
-    //! Encode the polyline according to the defined compression algorithm.
-    /*!
-    \return The encoded polyline as string.
-    */
-    std::string encode() const;
-
-    //! Returns the existing polyline.
-    const Polyline &polyline() const;
-
-    //! Clears the list of points.
-    void clear();
-
-    //! Returns the result of encoding of the given polyline.
-    static std::string encode(const Polyline &polyline);
-
-    //! Returns polyline decoded from the given \p coordinates string.
-    static Polyline decode(const std::string &coordinates);
 
 private:
-    //! Encodes a single value according to the compression algorithm.
-    static std::string encode(double value);
 
-    //! Decodes the current decimal value out of string.
-    static double decode(const std::string &coords, size_t &i);
+    // States for the decoding state machine.
+    enum DecodingState
+    {
+        WAITING_FOR_FIRST_POINT = 0,
+        WAITING_FOR_FIRST_LAT_CHAR,
+        DECODING_LATITUDE,
+        WAITING_FOR_FIRST_LON_CHAR,
+        DECODING_LONGITUDE,
+    };
+    int m_state = 0;
 
-    //! Store the polyline - the list of points.
-    Polyline m_polyline;
+    int32_t m_result; // partial result
+    int m_shift; // partial shift as used by the decoding algorithm
+    Point m_prev_pt; // previous point.  
+    
 };
+
+} //Polyline namespace
 
 #endif // POLYLINEENCODER_H
