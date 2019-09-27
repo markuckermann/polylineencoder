@@ -101,9 +101,9 @@ private:
     };
     int m_state = 0;
 
-    int32_t m_result; // partial result
-    int m_shift; // partial shift as used by the decoding algorithm
-    Point m_prev_pt; // previous point.  
+    int32_t m_result = 0; // partial result
+    int m_shift = 0; // partial shift as used by the decoding algorithm
+    Point m_prev_pt = {0,0}; // previous point.  
     
 };
 
