@@ -29,7 +29,7 @@
 #include "../src/polylineencoder.cpp"
 
 
-using namespace Polyline;
+using namespace polyline;
 
 static Point line[20];
 
@@ -38,11 +38,11 @@ bool test1()
 {
     Point pt = {38.5, -120.2};
     char result[16]; // 13 minimum
-    encodePoint(&pt, result);
+    encode_point(&pt, result);
 
     if(strcmp(result, "_p~iF~ps|U") != 0)
     {
-        printf("encodePoint() resulted in %s instead of %s. \n",result, "_p~iF~ps|U");
+        printf("encode_point() resulted in %s instead of %s. \n",result, "_p~iF~ps|U");
         return false;
     }
     
@@ -53,21 +53,21 @@ bool test1()
 bool transcodeAllPoints(size_t num_points, const char * coords) {
     char result_str[40];
 
-    size_t ret = encodeLine(line, num_points, result_str, sizeof(result_str));
+    size_t ret = encode_line(line, num_points, result_str, sizeof(result_str));
     if( ret != num_points ) {
-        printf("encodeLine() returned %u instead of %u. \n",(unsigned int)ret, (unsigned int)num_points);
+        printf("encode_line() returned %u instead of %u. \n",(unsigned int)ret, (unsigned int)num_points);
         return false;
     }
 
     if ( strcmp(result_str, coords) != 0) {
-        printf("encodeLine() resulted in %s instead of %s. \n",result_str, coords);
+        printf("encode_line() resulted in %s instead of %s. \n",result_str, coords);
         return false;
     }
 
     Point result_line[40];
-    ret = decodeLine(result_str, result_line, 40);
+    ret = decode_line(result_str, result_line, 40);
     if( ret != num_points ) {
-        printf("decodeLine() returned %u instead of %u. \n",(unsigned int)ret, (unsigned int)num_points);
+        printf("decode_line() returned %u instead of %u. \n",(unsigned int)ret, (unsigned int)num_points);
         return false;
     }
 
@@ -124,9 +124,9 @@ bool test5()
     line[1] = {0, 0};
     line[2] = {-90, -180};
 
-    size_t ret = encodeLine(line, 3, result_str, sizeof(result_str));
+    size_t ret = encode_line(line, 3, result_str, sizeof(result_str));
     if( ret != 1 ) {
-        printf("encodeLine() returned %u instead of 1. \n",(unsigned int)ret);
+        printf("encode_line() returned %u instead of 1. \n",(unsigned int)ret);
         return false;
     }
     return true;
@@ -135,9 +135,9 @@ bool test5()
 // The string is too long for the points Array.
 bool test6()
 {
-    size_t ret = decodeLine("_p~iF~ps|U_ulLnnqC_mqNvxq`@", line, 1); // only give space for one point
+    size_t ret = decode_line("_p~iF~ps|U_ulLnnqC_mqNvxq`@", line, 1); // only give space for one point
     if( ret != 1 ) {
-        printf("decodeLine() returned %u instead of 1. \n",(unsigned int)ret);
+        printf("decode_line() returned %u instead of 1. \n",(unsigned int)ret);
         return false;
     }
     return true;
