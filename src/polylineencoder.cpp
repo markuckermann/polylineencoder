@@ -53,10 +53,10 @@ size_t encode_point(Point* pt, char* result)
             e5 = ~e5; // (5)
         }
 
-        bool hasNextChunk = false;
+        bool hasNextChunk = true;
 
         // Split the value into 5-bit chunks and convert each of them to integer
-        do {
+        while (hasNextChunk) {
             int32_t nextChunk = (e5 >> chunk_size); // (6), (7) - start from the left 5 bits.
             hasNextChunk = nextChunk > 0;
 
@@ -75,7 +75,7 @@ size_t encode_point(Point* pt, char* result)
 
             e5 = nextChunk;
 
-        } while (hasNextChunk);
+        }
 
         p_value = &(pt->lon);
     }
